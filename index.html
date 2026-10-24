@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ug" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شۈكران توربېتى - يۇقىرى سىغىملىق</title>
+    <style>
+        :root { --p-color: #2c3e50; --a-color: #d4ac0d; --bg: #f0f2f5; }
+        body { font-family: "UKIJ Tuz Tom", "Microsoft Uighur", serif; background: var(--bg); margin: 0; padding: 0; }
+        header { background: var(--p-color); color: white; padding: 25px; text-align: center; border-bottom: 4px solid var(--a-color); }
+        nav { background: #34495e; display: flex; justify-content: center; flex-wrap: wrap; padding: 10px; position: sticky; top: 0; z-index: 1000; }
+        nav button { background: none; border: none; color: white; margin: 5px 15px; cursor: pointer; font-size: 1.1rem; font-family: inherit; transition: 0.3s; }
+        nav button:hover { color: var(--a-color); }
+        
+        .container { max-width: 1000px; margin: 20px auto; padding: 20px; min-height: 80vh; }
+        .section { display: none; }
+        .active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .card { background: white; border-radius: 15px; padding: 25px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: relative; border: 1px solid #ddd; }
+        .card img { width: 100%; border-radius: 10px; margin-top: 15px; max-height: 800px; object-fit: contain; background: #fafafa; }
+        .card h3 { margin-top: 0; color: var(--p-color); border-right: 5px solid var(--a-color); padding-right: 15px; }
+        
+        .delete-btn { 
+            display: none; 
+            background: #ff4757; color: white; border: none; 
+            padding: 8px 18px; border-radius: 5px; cursor: pointer; 
+            position: absolute; left: 15px; top: 15px; font-family: inherit;
+        }
+        .admin-mode .delete-btn { display: block; }
+
+        .admin-box { background: #fff; padding: 30px; border-radius: 15px; border: 2px solid var(--p-color); margin-bottom: 20px; }
+        input, textarea, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-family: inherit; box-sizing: border-box; font-size: 1rem; }
+        .btn-send { background: #27ae60; color: white; border: none; padding: 15px; width: 100%; cursor: pointer; border-radius: 8px; font-size: 1.2rem; font-family: inherit; }
+        
+        footer { text-align: center; padding: 30px; background: var(--p-color); color: white; margin-top: 50px; }
+        
+        #loading { text-align: center; font-size: 1.5rem; display: none; color: var(--p-color); }
+    </style>
+</head>
+<body id="body-tag">
+
+<header>
+    <h1>شۈكران توربېتى</h1>
+</header>
+
+<nav>
+    <button onclick="showSection('home')">باش بەت</button>
+    <button onclick="showSection('yazma')">يازما</button>
+    <button onclick="showSection('resim')">رەسىملەر</button>
+    <button onclick="showSection('tarix')">تارىخ</button>
+    <button onclick="showSection('about')">بىز ھەققىدە</button>
+    <button id="admin-nav-btn" onclick="checkAdmin()" style="color: #f1c40f;">باشقۇرۇش</button>
+</nav>
+
+<div class="container">
+    <div id="loading">بىر تەرەپ قىلىنىۋاتىدۇ...</div>
+
+    <!-- باش بەت -->
+    <div id="home" class="section active">
+        <div class="card">
+            <h2>خوش كەلدىڭىز</h2>
+            <p>بۇ يەردىن ئۆزىڭىز خالىغان ھەرخىل مەزمۇنلارنى كۆرەلەيسىز</p>
+        </div>
+        <div id="list-home"></div>
+    </div>
+
+    <!-- بۆلەكلەر -->
+    <div id="yazma" class="section"><h2>بارلىق يازمىلار</h2><div id="list-yazma"></div></div>
+    <div id="resim" class="section"><h2>رەسىملەر گالېرىيەسى</h2><div id="list-resim"></div></div>
+    <div id="tarix" class="section"><h2>تارىخىي مەزمۇنلار</h2><div id="list-tarix"></div></div>
+
+    <div id="about" class="section">
+        <div class="card">
+            <h2>بىز ھەققىدە</h2>
+            <p>بۇ تور بەت ئۇيغۇر مەدەنىيەت يادىكارلىقلىرىنى ۋە شەخسىي خاتىرىلەرنى يۇقىرى سۈپەتلىك ساقلاش ئۈچۈن لايىھەلەندى.</p>
+        </div>
+    </div>
+
+    <!-- باشقۇرۇش كۆزنىكى -->
+    <div id="admin-panel" class="section">
+        <div class="admin-box">
+            <h2>يېڭى مەزمۇن يوللاش</h2>
+            <select id="type">
+                <option value="yazma">يازما</option>
+                <option value="resim">رەسىم</option>
+                <option value="tarix">تارىخ</option>
+            </select>
+            <input type="text" id="title" placeholder="تېمىسى...">
+            <textarea id="content" rows="6" placeholder="مەزمۇنى..."></textarea>
+            <label>رەسىم تاللاڭ (خالىغانچە چوڭ رەسىم يوللىسىڭىز بولىدۇ):</label>
+            <input type="file" id="fileInput" accept="image/*">
+            <button class="btn-send" onclick="addNewPost()">يوللاش</button>
+            <button onclick="logout()" style="margin-top:15px; color:red; border:none; background:none; cursor:pointer; width:100%;">باشقۇرۇشتىن چىقىش</button>
+        </div>
+    </div>
+</div>
+
+<footer><p>بارلىق ھوقۇق شۈكران توربېتىگە تەۋە © 2024</p></footer>
+
+<script>
+    const ADMIN_PASSWORD = "6897179";
+    let db;
+
+    // 1. IndexedDB قۇرۇش ۋە ئېچىش
+    const request = indexedDB.open("ShukranDB", 1);
+
+    request.onupgradeneeded = function(e) {
+        db = e.target.result;
+        db.createObjectStore("posts", { keyPath: "id" });
+    };
+
+    request.onsuccess = function(e) {
+        db = e.target.result;
+        loadData();
+    };
+
+    request.onerror = function(e) {
+        console.error("ساندان ئېچىلمىدى!");
+    };
+
+    function showSection(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        window.scrollTo(0,0);
+    }
+
+    function checkAdmin() {
+        let p = prompt("باشقۇرۇش پارولىنى كىرگۈزۈڭ:");
+        if (p === ADMIN_PASSWORD) {
+            document.getElementById('body-tag').classList.add('admin-mode');
+            document.getElementById('admin-nav-btn').innerText = "باشقۇرۇش (كىردىڭىز)";
+            showSection('admin-panel');
+        } else {
+            alert("پارول خاتا!");
+        }
+    }
+
+    function logout() {
+        document.getElementById('body-tag').classList.remove('admin-mode');
+        document.getElementById('admin-nav-btn').innerText = "باشقۇرۇش";
+        showSection('home');
+    }
+
+    // 2. يېڭى مەزمۇن قوشۇش
+    function addNewPost() {
+        const title = document.getElementById('title').value;
+        const content = document.getElementById('content').value;
+        const type = document.getElementById('type').value;
+        const file = document.getElementById('fileInput').files[0];
+
+        if (!title || !content) return alert("تولۇق كىرگۈزۈڭ!");
+
+        document.getElementById('loading').style.display = 'block';
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                saveToDB({ id: Date.now(), title, content, type, img: e.target.result });
+            };
+            reader.readAsDataURL(file);
+        } else {
+            saveToDB({ id: Date.now(), title, content, type, img: null });
+        }
+    }
+
+    function saveToDB(item) {
+        const transaction = db.transaction(["posts"], "readwrite");
+        const store = transaction.objectStore("posts");
+        const request = store.add(item);
+
+        request.onsuccess = function() {
+            document.getElementById('loading').style.display = 'none';
+            alert("يوللاندى!");
+            location.reload();
+        };
+
+        request.onerror = function() {
+            alert("خاتالىق كۆرۈلدى، ساقلانمىدى.");
+        };
+    }
+
+    // 3. مەزمۇننى ئۆچۈرۈش
+    function deletePost(id) {
+        if (confirm("راستلا ئۆچۈرەمسىز؟")) {
+            const transaction = db.transaction(["posts"], "readwrite");
+            const store = transaction.objectStore("posts");
+            store.delete(id);
+            transaction.oncomplete = function() {
+                location.reload();
+            };
+        }
+    }
+
+    // 4. مەزمۇنلارنى يۈكلەش
+    function loadData() {
+        const transaction = db.transaction(["posts"], "readonly");
+        const store = transaction.objectStore("posts");
+        const request = store.getAll();
+
+        request.onsuccess = function() {
+            const posts = request.result.reverse();
+            posts.forEach(item => {
+                const card = `
+                    <div class="card">
+                        <button class="delete-btn" onclick="deletePost(${item.id})">ئۆچۈرۈش</button>
+                        <h3>${item.title}</h3>
+                        ${item.img ? `<img src="${item.img}">` : ''}
+                        <p style="white-space:pre-wrap;">${item.content}</p>
+                    </div>
+                `;
+                if (item.type === 'yazma') document.getElementById('list-yazma').innerHTML += card;
+                if (item.type === 'resim') document.getElementById('list-resim').innerHTML += card;
+                if (item.type === 'tarix') document.getElementById('list-tarix').innerHTML += card;
+                document.getElementById('list-home').innerHTML += card;
+            });
+        };
+    }
+</script>
+
+</body>
+</html>
